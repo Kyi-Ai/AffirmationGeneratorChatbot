@@ -1,9 +1,20 @@
 import streamlit as st
 import pandas as pd
 import spacy
+import os
 import random
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestClassifier
+
+try:
+    spacy.load("en_core_web_sm")
+except OSError:
+    os.system("python -m spacy download en_core_web_sm")
+    spacy.load("en_core_web_sm")
+
+# Load the model
+nlp = spacy.load("en_core_web_sm")
+
 
 # Load spaCy model
 nlp = spacy.load("en_core_web_sm")
