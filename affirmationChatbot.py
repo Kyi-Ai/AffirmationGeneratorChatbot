@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 import schedule
 import time
+import threading
 import smtplib
 from email.mime.text import MIMEText
 import streamlit as st
@@ -127,8 +128,9 @@ def send_scheduled_emails():
     # Clear the file after sending all emails
     sheet.delete_rows(2, sheet.max_row)
     workbook.save(file_path)
+    st.write("All scheduled affirmations have been sent!")
 
-# Streamlit App
+# Streamlit UI for scheduling
 st.title("Emotion Affirmation Generator")
 
 user_input = st.text_input("How are you feeling today? Describe your mood:")
@@ -143,10 +145,7 @@ if st.button("Generate Affirmation"):
     else:
         st.write("Please fill in both fields.")
 
-# Schedule the email sending at 7 AM every day
-schedule.every().day.at("07:00").do(send_scheduled_emails)
-
-# Run the scheduler (in a long-running process)
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+# Button to manually trigger email sending
+if st.button("Send Scheduled Affirmations Now"):
+    st.write("Sending scheduled affirmations...")
+    send_scheduled_emails()
