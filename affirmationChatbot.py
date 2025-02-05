@@ -16,7 +16,6 @@ import threading
 import smtplib
 from email.mime.text import MIMEText
 import streamlit as st
-
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
 # Load spaCy model
@@ -28,10 +27,14 @@ except OSError:
     print("python -m spacy download en_core_web_sm")
     exit(1)
 
+# Step 2: Load Datasets in Chunks
+def load_data_in_chunks(file_path, chunk_size=10000):
+    chunks = pd.read_csv(file_path, chunksize=chunk_size)
+    data = pd.concat(chunks, ignore_index=True)
+    return data
 
-# Step 2: Load Datasets
-data = pd.read_csv('reduced_emotion_dataset.csv')  # Mood Dataset
-affirmations = pd.read_csv('affirmation_new.csv')  # Affirmation Dataset
+data = load_data_in_chunks('reduced_emotion_dataset.csv')  # Mood Dataset
+affirmations = load_data_in_chunks('affirmation_new.csv')  # Affirmation Dataset
 
 # Step 3: Preprocess Text Data with spaCy
 def preprocess_text_spacy(text):
@@ -39,7 +42,15 @@ def preprocess_text_spacy(text):
     tokens = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct and token.is_alpha]
     return ' '.join(tokens)
 
-data['Cleaned_Text'] = data['Text'].apply(preprocess_text_spacy)
+# Apply preprocessing in chunks to avoid memory issues
+def preprocess_in_chunks(data, column):
+    processed_chunks = []
+    for chunk in np.array_split(data, 10):  # Split data into 10 chunks
+        chunk['Cleaned_Text'] = chunk[column].apply(preprocess_text_spacy)
+        processed_chunks.append(chunk)
+    return pd.concat(processed_chunks, ignore_index=True)
+
+data = preprocess_in_chunks(data, 'Text')
 
 # Step 4: Feature Extraction
 vectorizer = TfidfVectorizer(max_features=5000)
@@ -57,7 +68,7 @@ model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 st.write("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
 st.write("Classification Report:\n", classification_report(y_test, y_pred))
-st.write("Accuracy Score:", (accuracy_score(y_test, y_pred))*100, "%")
+st.write("Accuracy Score:", (accuracy_score(y_test, y_pred)) * 100, "%")
 
 # Step 8: Analyze the Mood from User Input
 def analyze_mood(user_input):
