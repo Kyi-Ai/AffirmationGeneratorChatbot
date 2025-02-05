@@ -3,6 +3,7 @@
 
 import pandas as pd
 import spacy
+import subprocess
 import random
 import os
 from openpyxl import Workbook, load_workbook
@@ -18,12 +19,11 @@ import streamlit as st
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
 # Load spaCy model
-model_name = "en_core_web_sm"
 try:
-    nlp = spacy.load(model_name)
+    nlp = spacy.load('en_core_web_sm')
 except OSError:
-    os.system(f"python -m spacy download {model_name}")
-    nlp = spacy.load(model_name)
+    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+    nlp = spacy.load('en_core_web_sm')
 
 # Step 2: Load Datasets
 data = pd.read_csv('reduced_emotion_dataset.csv')  # Mood Dataset
