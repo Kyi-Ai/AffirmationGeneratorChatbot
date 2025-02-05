@@ -4,5 +4,3 @@ spacy
 scikit-learn
 openpyxl
 schedule
-en-core-web-sm
-
