@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Emotion Affirmation Generator"""
+"""Emotion Affirmation Generator with Stratified Downsampling"""
 
 import pandas as pd
 import spacy
@@ -27,14 +27,40 @@ except OSError:
     print("python -m spacy download en_core_web_sm")
     exit(1)
 
-# Step 2: Load Datasets in Chunks
-def load_data_in_chunks(file_path, chunk_size=10000):
-    chunks = pd.read_csv(file_path, chunksize=chunk_size)
-    data = pd.concat(chunks, ignore_index=True)
-    return data
+# Step 1: Downsample the Dataset using Stratified Sampling
+def downsample_dataset(file_path, target_size, stratify_column):
+    """
+    Downsamples the dataset while maintaining the distribution of a specific column.
+    """
+    # Load the dataset
+    data = pd.read_csv(file_path)
 
-data = load_data_in_chunks('reduced_emotion_dataset.csv')  # Mood Dataset
-affirmations = load_data_in_chunks('affirmation_new.csv')  # Affirmation Dataset
+    # Calculate the fraction to downsample
+    original_size = len(data)
+    downsample_fraction = target_size / original_size
+
+    # Perform stratified sampling
+    downsampled_data, _ = train_test_split(
+        data,
+        test_size=1 - downsample_fraction,  # Keep the target fraction
+        stratify=data[stratify_column],  # Maintain the distribution of this column
+        random_state=42  # For reproducibility
+    )
+
+    # Save the downsampled dataset to a new file
+    output_file_path = 'downsampled_emotion_dataset.csv'
+    downsampled_data.to_csv(output_file_path, index=False)
+
+    print(f"Downsampled dataset saved to {output_file_path}")
+    print(f"Original size: {original_size} rows, Downsampled size: {len(downsampled_data)} rows")
+
+    return downsampled_data
+
+# Downsample the dataset
+data = downsample_dataset('reduced_emotion_dataset.csv', target_size=10000, stratify_column='Mood')
+
+# Step 2: Load Affirmations Dataset
+affirmations = pd.read_csv('affirmation_new.csv')  # Affirmation Dataset
 
 # Step 3: Preprocess Text Data with spaCy
 def preprocess_text_spacy(text):
@@ -42,15 +68,8 @@ def preprocess_text_spacy(text):
     tokens = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct and token.is_alpha]
     return ' '.join(tokens)
 
-# Apply preprocessing in chunks to avoid memory issues
-def preprocess_in_chunks(data, column):
-    processed_chunks = []
-    for chunk in np.array_split(data, 10):  # Split data into 10 chunks
-        chunk['Cleaned_Text'] = chunk[column].apply(preprocess_text_spacy)
-        processed_chunks.append(chunk)
-    return pd.concat(processed_chunks, ignore_index=True)
-
-data = preprocess_in_chunks(data, 'Text')
+# Apply preprocessing to the downsampled dataset
+data['Cleaned_Text'] = data['Text'].apply(preprocess_text_spacy)
 
 # Step 4: Feature Extraction
 vectorizer = TfidfVectorizer(max_features=5000)
