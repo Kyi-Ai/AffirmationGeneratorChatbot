@@ -19,12 +19,14 @@ import streamlit as st
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
 # Load spaCy model
-spacy_model = "en_core_web_sm"
 try:
-    nlp = spacy.load(spacy_model)
+    nlp = spacy.load("en_core_web_sm")
 except OSError:
-    subprocess.run(["python", "-m", "spacy", "download", spacy_model], check=True)
-    nlp = spacy.load(spacy_model)
+    print("Error: spaCy model 'en_core_web_sm' is not installed.")
+    print("Run this command locally before deployment:")
+    print("python -m spacy download en_core_web_sm")
+    exit(1)
+
 
 # Step 2: Load Datasets
 data = pd.read_csv('reduced_emotion_dataset.csv')  # Mood Dataset
