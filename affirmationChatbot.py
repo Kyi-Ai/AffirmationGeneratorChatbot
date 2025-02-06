@@ -28,36 +28,58 @@ except OSError:
     exit(1)
 
 # Step 1: Downsample the Dataset using Stratified Sampling
-def downsample_dataset(file_path, target_size, stratify_column):
-    """
-    Downsamples the dataset while maintaining the distribution of a specific column.
-    """
-    # Load the dataset
-    data = pd.read_csv(file_path)
+# def downsample_dataset(file_path, target_size, stratify_column):
+#     """
+#     Downsamples the dataset while maintaining the distribution of a specific column.
+#     """
+#     # Load the dataset
+#     data = pd.read_csv(file_path)
 
-    # Calculate the fraction to downsample
-    original_size = len(data)
-    downsample_fraction = target_size / original_size
+#     # Calculate the fraction to downsample
+#     original_size = len(data)
+#     downsample_fraction = target_size / original_size
+
+#     # Perform stratified sampling
+#     downsampled_data, _ = train_test_split(
+#         data,
+#         test_size=1 - downsample_fraction,  # Keep the target fraction
+#         stratify=data[stratify_column],  # Maintain the distribution of this column
+#         random_state=42  # For reproducibility
+#     )
+
+#     # Save the downsampled dataset to a new file
+#     output_file_path = 'downsampled_emotion_dataset.csv'
+#     downsampled_data.to_csv(output_file_path, index=False)
+
+#     print(f"Downsampled dataset saved to {output_file_path}")
+#     print(f"Original size: {original_size} rows, Downsampled size: {len(downsampled_data)} rows")
+
+#     return downsampled_data
+
+# # Downsample the dataset
+# data = downsample_dataset('reduced_emotion_dataset.csv', target_size=10000, stratify_column='Mood')
+
+@st.cache_data
+def downsample_dataset(file_path, target_size=10000, stratify_column="Mood"):
+    """Downsamples the dataset while maintaining class distribution."""
+
+    # Load dataset with limited rows (prevents memory issues)
+    data = pd.read_csv(file_path, usecols=[stratify_column], nrows=50000)
 
     # Perform stratified sampling
     downsampled_data, _ = train_test_split(
         data,
-        test_size=1 - downsample_fraction,  # Keep the target fraction
-        stratify=data[stratify_column],  # Maintain the distribution of this column
-        random_state=42  # For reproducibility
+        test_size=1 - (target_size / len(data)),  # Calculate the downsampling fraction
+        stratify=data[stratify_column],  # Maintain distribution
+        random_state=42
     )
-
-    # Save the downsampled dataset to a new file
-    output_file_path = 'downsampled_emotion_dataset.csv'
-    downsampled_data.to_csv(output_file_path, index=False)
-
-    print(f"Downsampled dataset saved to {output_file_path}")
-    print(f"Original size: {original_size} rows, Downsampled size: {len(downsampled_data)} rows")
 
     return downsampled_data
 
-# Downsample the dataset
-data = downsample_dataset('reduced_emotion_dataset.csv', target_size=10000, stratify_column='Mood')
+# Load downsampled data
+data = downsample_dataset('reduced_emotion_dataset.csv')
+
+st.write(f"Loaded {len(data)} rows from the downsampled dataset.")
 
 # Step 2: Load Affirmations Dataset
 affirmations = pd.read_csv('affirmation_new.csv')  # Affirmation Dataset
