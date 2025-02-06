@@ -60,11 +60,11 @@ except OSError:
 # data = downsample_dataset('reduced_emotion_dataset.csv', target_size=10000, stratify_column='Mood')
 
 @st.cache_data
-def downsample_dataset(file_path, target_size=10000, stratify_column="Mood"):
+def downsample_dataset(file_path, target_size=5000, stratify_column="Mood"):
     """Downsamples the dataset while maintaining class distribution."""
 
     # Load dataset with limited rows (prevents memory issues)
-    data = pd.read_csv(file_path, usecols=[stratify_column], nrows=50000)
+    data = pd.read_csv(file_path, usecols=[stratify_column], nrows=30000)
 
     # Perform stratified sampling
     downsampled_data, _ = train_test_split(
