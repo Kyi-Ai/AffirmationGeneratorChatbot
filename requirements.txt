@@ -1,6 +1,5 @@
 streamlit
 pandas
 spacy
-scikit-learn
 openpyxl
-schedule
+scikit-learn
